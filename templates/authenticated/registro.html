@@ -1,0 +1,30 @@
+{% extends "inicio/base.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row py-5">
+        <form class="col-md-9 m-auto" method="POST" role="form">
+            <h3>Registro Usuario</h3>
+            {% csrf_token %}
+            {{ form | crispy }}
+            <div class="row">
+                <div class="col text-end mt-2">
+                    <button type="submit" class="btn btn-success btn-lg px-3">Login</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+{% endblock %}
+
+
+
+
+    
+
+
+

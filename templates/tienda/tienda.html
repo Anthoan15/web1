@@ -1,49 +1,89 @@
 {% extends "inicio/base.html" %}
 {% load static %}
 
-
-
 {% block content %}
 <div class="container">
-
   <div style="float: right;">
-
-  
-    {% include "carro/widget.html" %}
-
+    <div id="carro-container">
+      {% include "carro/widget.html" %}
+    </div>
   </div>
-
 
   <div class="row">
-{% for producto in productos %}
-    <div class="col-md-3">
-
-    <div class="card" style="width: 100%; margin: 10px 10px;">
-        <img src="{{producto.imagen.url}}" class="card-img-top">
-
-        <div class="card-body" style="text-align:center;">
-
-          <h6 class="card-title">{{producto.nombre}}</h6>
-
-          <p class="card-text>">{{producto.precio}}&nbsp;$</p>
-
-
+    {% for producto in productos %}
+      <div class="col-md-3">
+        <div class="card" style="width: 100%; margin: 10px 10px;">
+          <img src="{{ producto.imagen.url }}" class="card-img-top">
+          <div class="card-body" style="text-align:center;">
+            <h6 class="card-title">{{ producto.nombre }}</h6>
+            <p class="card-text">{{ producto.precio }}&nbsp;$</p>
+          </div>
+          <div class="card-footer text-center">
+            <button class="btn btn-success agregar-producto" data-producto-id="{{ producto.id }}" data-url="{% url 'carro:agregar_producto' producto.id %}">Comprar</button>
+          </div>
         </div>
-        
-        <div class="card-footer text-center">
-
-            <a href="{% url 'carro:agregar' producto.id %}" class="btn btn-success">Comprar</a>
-
-        </div>
-
-
-
-    </div>
-
-   </div>
-
-{% endfor %}
+      </div>
+    {% endfor %}
   </div>
 </div>
-{% endblock %}
 
+<!-- Formulario CSRF -->
+<form id="csrf-form">
+  {% csrf_token %}
+</form>
+
+<!-- Añadir el archivo JavaScript -->
+<script src="{% static 'js/templatemo.js' %}"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+  $(document).ready(function() {
+    function actualizarCarro(url, productoId, isAdd) {
+      $.ajax({
+        url: url,
+        method: 'POST',
+        data: {
+          'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()
+        },
+        success: function(response) {
+          if (response.status === 'ok') {
+            console.log('Producto actualizado correctamente');
+            if (isAdd === undefined) {
+              $('#cantidad-' + productoId).text(response.carro[productoId].cantidad);
+              $('#precio-' + productoId).text(response.carro[productoId].precio.toFixed(2));
+            }
+            $('#importe-total').text(response.importe_total_carro.toFixed(2) + ' $');
+            $('#carro-container').html(response.widget);
+          } else {
+            console.log('Error al actualizar el producto');
+          }
+        },
+        error: function(response) {
+          console.log('Error en la solicitud AJAX');
+        }
+      });
+    }
+
+    $(document).on('click', '.agregar-producto', function(e) {
+      e.preventDefault();
+      var productoId = $(this).data('producto-id');
+      var url = $(this).data('url');
+      actualizarCarro(url, productoId, true);
+    });
+
+    $(document).on('click', '.sumar-producto', function(e) {
+      e.preventDefault();
+      var productoId = $(this).data('producto-id');
+      var url = $(this).data('url');
+      actualizarCarro(url, productoId);
+    });
+
+    $(document).on('click', '.restar-producto', function(e) {
+      e.preventDefault();
+      var productoId = $(this).data('producto-id');
+      var url = $(this).data('url');
+      actualizarCarro(url, productoId);
+    });
+  });
+</script>
+{% endblock %}
